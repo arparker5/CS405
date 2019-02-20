@@ -1,13 +1,17 @@
+'''
+Andrew Parker
 
+CS 405
+
+A* Search
+
+Dr. Metzgar
+'''
 import math
-
-
-def takesecond(elem):
-    return elem[1]
-
+import time
 
 class Node:
-    __nodecoord = ()            # Needs to know neighbors, distance from end, distance to all neighbors
+    __nodecoord = ()
     __distend = 0
     __cost = 0
     __weight = 0                  # Cost to Node + Distance to the end point
@@ -110,33 +114,33 @@ class BinaryHeap:   # Code for binary heap is based off of code found on interac
             print(self.__heaplist[i].getcoord())
 
 
-class Environment:                # Needs to print maze, needs 2D array of [coordinates : Node]
-
+class Environment:
+    __line = []                   # Array of strings, represents each line of the board
     __startcoord = ()
     __endcoord = ()
     __nodes = []
     __visitedlist = []
     __pathlist = []
 
-    nodecount = 0
 
-    __line = []                 # Array of strings, represents each line of the board
+    def resetmaze(self):
+        self.__line = []
+        self.__line.append(['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'])
+        self.__line.append(['#', 'S', '.', '.', '.', '.', '#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'])
+        self.__line.append(['#', '.', '#', '#', '#', '.', '#', '.', '#', '#', '#', '#', '#', '.', '#', '.', '#'])
+        self.__line.append(['#', '.', '#', '.', '#', '.', '#', '.', '.', 'E', '#', '.', '.', '.', '#', '.', '#'])
+        self.__line.append(['#', '.', '#', '.', '#', '.', '#', '#', '#', '#', '#', '.', '#', '#', '#', '.', '#'])
+        self.__line.append(['#', '.', '#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#', '.', '#'])
+        self.__line.append(['#', '.', '#', '#', '#', '#', '#', '.', '#', '.', '#', '#', '#', '.', '#', '.', '#'])
+        self.__line.append(['#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', '.', '.', '.', '.', '.', '#'])
+        self.__line.append(['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'])
 
-    __line.append(['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'])
-    __line.append(['#', 'S', '.', '.', '.', '.', '#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'])
-    __line.append(['#', '.', '#', '#', '#', '.', '#', '.', '#', '#', '#', '#', '#', '.', '#', '.', '#'])
-    __line.append(['#', '.', '#', '.', '#', '.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#'])
-    __line.append(['#', '.', '#', '.', '#', '.', '#', '#', '#', '#', '#', '.', '#', '#', '#', '.', '#'])
-    __line.append(['#', '.', '#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#', '.', '#'])
-    __line.append(['#', '.', '#', '#', '#', '#', '#', '.', '#', '.', '#', '#', '#', '.', '#', '.', '#'])
-    __line.append(['#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', '.', '.', '.', '.', 'E', '#'])
-    __line.append(['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'])
-
-    def printmazestart(self):
+    def printmaze(self):
         for i in range(len(self.__line)):
             for j in range(len(self.__line[0])):
                 print(self.__line[i][j], end="")
             print()
+        print("\n\n")
 
     def setvisited(self, coord):
         self.__visitedlist.append(coord)
@@ -147,14 +151,12 @@ class Environment:                # Needs to print maze, needs 2D array of [coor
         return 0
 
     def genstartend(self):                    # Finds all "." on the maze and makes a Node object with their coordinate
-        for i in range(1, len(self.__line) - 1): # Finds start and end of the maze
+        for i in range(1, len(self.__line) - 1):  # Finds start and end of the maze
             for j in range(1, len(self.__line[0]) - 1):
                 if self.__line[i][j] == "S":
                     self.__startcoord = (j, i)
-                    # print(self.__startcoord[0], ",", self.__startcoord[1], " START")
                 elif self.__line[i][j] == "E":
                     self.__endcoord = (j, i)
-                    # print(self.__endcoord[0], ",", self.__endcoord[1], " END")
 
     def checkaround(self, node):  # Takes a node, returns a list of all neighboring nodes that have not been visited
         hlist = []
@@ -174,13 +176,16 @@ class Environment:                # Needs to print maze, needs 2D array of [coor
         for i in hlist:
             if i.getcoord() == self.__endcoord:
                 return i.getcoord(), i
+            self.__line[i.gety()][i.getx()] = '!'
+            time.sleep(0.3)
+            E1.printmaze()
         return hlist
 
     def Asearch(self):
         s = Node(self.__startcoord, self.__endcoord)
         heap = BinaryHeap([])
         heap.makeHeap(E1.checkaround(s))
-        while True:
+        while True:                                             # Main program loop. Executes the A* Search algorithm
             nextnode = heap.popmin()
             nextneighbors = E1.checkaround(nextnode)
             if isinstance(nextneighbors, tuple):
@@ -196,16 +201,16 @@ class Environment:                # Needs to print maze, needs 2D array of [coor
             self.__pathlist.append(endnode.getprevcoord())
             endnode = endnode.getprevnode()
 
-        '''for i in self.__pathlist:
-            print(i)'''
+        E1.resetmaze()
 
-        for i in self.__pathlist:
+        for i in self.__pathlist:                               # Maps out the final path to the end of the maze
             self.__line[i[1]][i[0]] = '!'
 
-        E1.printmazestart()
+        E1.printmaze()
 
 
 E1 = Environment()
-E1.printmazestart()
+E1.resetmaze()
+E1.printmaze()
 E1.genstartend()
 E1.Asearch()
