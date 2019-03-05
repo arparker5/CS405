@@ -21,9 +21,7 @@ class Node:
             self.__nodecoord = coord
         if prevnode is not None:
             self.__previousnode = prevnode
-            #print(self.__nodecoord)
             prevnode.addchild(self)
-        #E1.settempcoordmap(self.__nodecoord)
 
     def addchild(self, child):                  # Adds list of nodes to list of children
         self.__children.append(child)
@@ -42,7 +40,6 @@ class Node:
 
 
 class Graph:
-    #_moves = []
     count = 0
     __leaves = []                                   # list of all the end nodes
     __start = 0
@@ -52,10 +49,8 @@ class Graph:
     __bestnode = Node(0, Node(0))
 
     def __init__(self, coord):
-        # self.__moves = E1.getmovesleft().copy()
         self.__start = time.time()
         self.generategraph(Node(coord), E1.getmovesleft().copy(), 0, 0)
-        print("----------------")
 
     def insert(self, coord, prevnode):
         return Node(coord, prevnode)
@@ -65,7 +60,7 @@ class Graph:
             return 1
         return 0
 
-    def generategraph(self, root, moves, p, score):        # p: 0 = ai turn, 1 = opponent turn
+    def generategraph(self, root, moves, p, score):  # Generates a game tree. Makes a list of evaluated leaves
         if len(moves) == 0:                         # base case: no more moves (board is full)
             self.__leaves.append(root)
             self.__leaves[-1].setscore(score)
@@ -80,7 +75,6 @@ class Graph:
                 newroot = self.insert(i, root)
                 a = moves.copy()
                 a.remove(i)
-                # print(len(moves))
                 E1.settempcoordmap(i)
                 if score == E1.testpoint():                # If no points scored,
                     self.generategraph(newroot, a, self.flip(p), score)        # Next player's turn
@@ -114,23 +108,7 @@ class Graph:
         currentnode = self.__bestnode
         while currentnode.getprev().getmove() != 0:
             currentnode = currentnode.getprev()
-            print(currentnode.getprev().getmove())
-        return [self.__bestscore, currentnode.getmove()]
-
-    def printgraph(self):
-        for i in self.__leaves:
-            print(i.getmove(), end="<-")
-            node = i
-            while node.getprev() != 0:
-                print(node.getprev().getmove(), end="<-")
-                node = node.getprev()
-            print()
-
-    def printleaves(self):
-        print("Leave Score:")
-        for i in self.__leaves:
-            print(i.getscore())
-
+        return currentnode.getmove()
 
 class DefensiveAgent:                                         # Agent takes into account the opposing player's next move
     __score = 0
@@ -148,48 +126,15 @@ class DefensiveAgent:                                         # Agent takes into
         return 0
 
     def pickmove(self):
-        move1 = [0, 0]                                   # value 1 is point, value 2 is the move
-        bestoppmove = [0, 0]
-        bestmove = [-100, 0]                            # value 1 is best score, value 2 is next move towards best score
+        g = Graph(0)                            # Start graph search
+        bestmove = g.getbestmove()
 
-        if len(E1.getmovesleft()) > self.__gamemoves/2:      # First half strategy: Look 2 moves ahead, maximize score
-            for i in E1.getmovesleft():
-                move2 = 0
-                E1.settempcoordmap(i)
-                move1[0] = E1.testpoint()
-                move1[1] = i
-
-                if move1[0] == 0:
-                    for j in E1.getmovesleft():
-                        E1.settempcoordmap(j)
-                        oppmove = E1.testpoint()
-                        if oppmove >= bestoppmove[0]:
-                            bestoppmove[0] = oppmove
-                            bestoppmove[1] = j
-                        E1.undotempcoordmap(j)
-                else:
-                    for j in E1.getmovesleft():
-                        E1.settempcoordmap(j)
-                        move2 = E1.testpoint()
-                        E1.undotempcoordmap(j)
-
-                if move1[0] - bestoppmove[0] + move2 >= bestmove[0]:
-                    bestmove = [move1[0], move1[1]]
-
-                E1.undotempcoordmap(i)
-        else:
-            g = Graph(0)                              # Second half of the game, do DFS
-            bestmove = g.getbestmove()
-
-
-        if bestmove[1] != 0:
-            return bestmove[1]
+        if bestmove != 0:
+            return bestmove
         return int(random.choice(E1.getmovesleft()))
 
     def retscore(self):
         return self.__score
-
-    # def graphsearch(self):                      # Does DFS to find best score, writes into bestmove
 
 
 class OffensiveAgent:             # Agent takes the move that gives the most amount of points, if no point, picks random
