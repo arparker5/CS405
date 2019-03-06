@@ -110,6 +110,7 @@ class Graph:
             currentnode = currentnode.getprev()
         return currentnode.getmove()
 
+
 class DefensiveAgent:                                         # Agent takes into account the opposing player's next move
     __score = 0
     __gamemoves = 0
@@ -258,6 +259,9 @@ class Environment:
 
         self.__movesleft = self.__coordmap.copy()
 
+        for i in range(len(self.__movesleft)//5):           # Randomly chooses some moves to play before the game starts
+            self.playmove(int(random.choice(self.getmovesleft())))
+
     def printboard(self):                                           # Prints the current board state
         count = 0
         countb = 0
@@ -273,10 +277,10 @@ class Environment:
 
         for x in range(0, self.__x):                                # Prints first row
             if x == 0:
-                print(1, end = " ")
-            print("x", end = " ")
+                print(1, end=" ")
+            print("x", end=" ")
             if x < (self.__x - 1):
-                print(self.__linestate[count], end = " ")
+                print(self.__linestate[count], end=" ")
                 count += 1
 
         for x in range(1, self.__x):                         # Prints all remaining rows
@@ -284,7 +288,7 @@ class Environment:
             for z in range(0, self.__x):
                 print(self.__linestate[count], end=" ")
                 if z < self.__x - 1:
-                    print(self.__boxeswon[countb], end = " ")
+                    print(self.__boxeswon[countb], end=" ")
                     countb += 1
                 count += 1
             print()
@@ -294,7 +298,7 @@ class Environment:
                 if y < (self.__x - 1):
                     print(self.__linestate[count], end=" ")
                     count += 1
-        print ("\n")
+        print("\n")
 
     def checkinput(self, x):                                 # Makes sure input is in dictionary and isn't already taken
         if x in self.__coordmap and self.__coordmap[x][1] != 1:
