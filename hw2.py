@@ -177,8 +177,8 @@ class Environment:
             if i.getcoord() == self.__endcoord:
                 return i.getcoord(), i
             self.__line[i.gety()][i.getx()] = '!'
-            time.sleep(0.3)
-            E1.printmaze()
+            # time.sleep(0.3)
+            # E1.printmaze()
         return hlist
 
     def Asearch(self):
