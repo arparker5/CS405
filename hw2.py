@@ -120,8 +120,8 @@ class Agent:
 		self.pathlist = []
 	
 	def sense(self, env):
-		self.percepts.append(env.getStart()) # [0]: start coord
-		self.percepts.append(env.getEnd())   # [1]: end coord
+		self.percepts.append(env.getStart())  # [0]: start coord
+		self.percepts.append(env.getEnd())    # [1]: end coord
 	
 	def think(self):
 		s = Node(self.percepts[0], self.percepts[1])
@@ -137,11 +137,15 @@ class Agent:
 			for i in nextneighbors:
 				heap.insert(i)
 
+		pathlength = 2
+
 		while True:                                           # Walks backward through previous nodes to generate path
 			if endnode.getprevcoord() == self.percepts[0]:
 				break
 			self.pathlist.append(endnode.getprevcoord())
 			endnode = endnode.getprevnode()
+			pathlength += 1
+		return pathlength
 	
 	def act(self, env):
 		env.resetmaze()
@@ -216,14 +220,12 @@ class Environment:
 		for i in hlist:
 			if i.getcoord() == self.__endcoord:
 				return i.getcoord(), i
-			self.__line[i.gety()][i.getx()] = '!'
-			#time.sleep(0.3)
-			#sim.env.printmaze()
+			self.__line[i.gety()][i.getx()] = '*'
 		return hlist
 	
 	def drawPath(self, path):
 		for i in path:
-			self.__line[i[1]][i[0]] = '!'
+			self.__line[i[1]][i[0]] = '*'
 
 class Simulation:
 	
@@ -237,9 +239,10 @@ class Simulation:
 		self.env.genstartend()
 		
 		self.agent.sense(self.env)
-		self.agent.think()
+		length = self.agent.think()
 		self.agent.act(self.env)
-				
+		print("Path length: ", length)
+
 if __name__ == "__main__":
 	sim = Simulation()
 	sim.simulate()
