@@ -10,16 +10,32 @@ Dr. Metzgar
 import math
 import time
 
+#manhattan .10270
+#euclidean .06
+#octile .0795
+#chebyshev .054
+
 class Node:
 	__nodecoord = ()
 	__distend = 0
 	__cost = 0
 	__weight = 0                  # Cost to Node + Distance to the end point
 	__previousnode = 0
-
-	def __init__(self, coord, endcoord, prevnode=None):
+	
+	def __init__(self, coord, endcoord,hType, prevnode=None):
 		self.__nodecoord = coord
-		self.__dist = math.sqrt((endcoord[0] - self.__nodecoord[0])**2 + (endcoord[1] - self.__nodecoord[1])**2)
+		#self.__dist = math.sqrt((endcoord[0] - self.__nodecoord[0])**2 + (endcoord[1] - self.__nodecoord[1])**2)
+		self.__hType = hType
+		if self.__hType=='euclidean':
+			self.__dist = math.sqrt((endcoord[0] - self.__nodecoord[0])**2 + (endcoord[1] - self.__nodecoord[1])**2)
+		elif self.__hType=='manhattan':
+			self.__dist = (abs(self.__nodecoord[0]-endcoord[0]) + abs(self.__nodecoord[1]-endcoord[1]))
+		elif self.__hType=='octile':
+			self.__dist = (max(abs(self.__nodecoord[0]-endcoord[0]),abs(self.__nodecoord[1]-endcoord[1])) 
+						   + 
+						  (math.sqrt(2)-1)*min(abs(self.__nodecoord[0]-endcoord[0]),abs(self.__nodecoord[1]-endcoord[1])))
+		elif self.__hType=='chebyshev':
+			self.__dist = max(abs(self.__nodecoord[0]-endcoord[0]),abs(self.__nodecoord[1]-endcoord[1]))
 		if prevnode is not None:
 			self.__previousnode = prevnode
 			self.__cost = prevnode.getcost() + 1
@@ -55,7 +71,6 @@ class Node:
 
 	def getprevnode(self):
 		return self.__previousnode
-
 
 class BinaryHeap:   # Code for binary heap is based off of code found on interactivepython.org
 	def __init__(self, nodelist):
@@ -123,13 +138,13 @@ class Agent:
 		self.percepts.append(env.getStart())  # [0]: start coord
 		self.percepts.append(env.getEnd())    # [1]: end coord
 	
-	def think(self):
-		s = Node(self.percepts[0], self.percepts[1])
+	def think(self, hType):
+		s = Node(self.percepts[0], self.percepts[1], hType)
 		heap = BinaryHeap([])
-		heap.makeHeap(sim.env.checkaround(s))
+		heap.makeHeap(sim.env.checkaround(s, hType))
 		while True:                                             # Main program loop. Executes the A* Search algorithm
 			nextnode = heap.popmin()
-			nextneighbors = sim.env.checkaround(nextnode)
+			nextneighbors = sim.env.checkaround(nextnode, hType)
 			if isinstance(nextneighbors, tuple):
 				print("End found!")
 				endnode = nextneighbors[1]
@@ -152,6 +167,7 @@ class Agent:
 		env.drawPath(self.pathlist)                               # Maps out the final path to the end of the maze
 		env.printmaze()
 
+
 class Environment:
 	__line = []                   # Array of strings, represents each line of the board
 	__startcoord = ()
@@ -166,11 +182,17 @@ class Environment:
 		self.__line.append(['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'])
 		self.__line.append(['#', 'S', '.', '.', '.', '.', '#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'])
 		self.__line.append(['#', '.', '#', '#', '#', '.', '#', '.', '#', '#', '#', '#', '#', '.', '#', '.', '#'])
-		self.__line.append(['#', '.', '#', '.', '#', '.', '#', '.', '.', 'E', '#', '.', '.', '.', '#', '.', '#'])
+		self.__line.append(['#', '.', '#', '.', '#', '.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#'])
+		self.__line.append(['#', '.', '#', '.', '#', '.', '#', '#', '#', '#', '#', '.', '#', '#', '#', '.', '#'])
+		self.__line.append(['#', '.', '#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#', '.', '#'])
+		self.__line.append(['#', '.', '#', '.', '#', '.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#'])
+		self.__line.append(['#', '.', '#', '.', '#', '.', '#', '#', '#', '#', '#', '.', '#', '#', '#', '.', '#'])
+		self.__line.append(['#', '.', '#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#', '.', '#'])
+		self.__line.append(['#', '.', '#', '.', '#', '.', '#', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#'])
 		self.__line.append(['#', '.', '#', '.', '#', '.', '#', '#', '#', '#', '#', '.', '#', '#', '#', '.', '#'])
 		self.__line.append(['#', '.', '#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', '.', '#', '.', '#'])
 		self.__line.append(['#', '.', '#', '#', '#', '#', '#', '.', '#', '.', '#', '#', '#', '.', '#', '.', '#'])
-		self.__line.append(['#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', '.', '.', '.', '.', '.', '#'])
+		self.__line.append(['#', '.', '.', '.', '.', '.', '#', '.', '.', '.', '#', 'E', '.', '.', '.', '.', '#'])
 		self.__line.append(['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'])
 
 		'''self.__line.append(['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'])
@@ -232,20 +254,20 @@ class Environment:
 	def getEnd(self):
 		return self.__endcoord
 
-	def checkaround(self, node):  # Takes a node, returns a list of all neighboring nodes that have not been visited
+	def checkaround(self, node, hType):  # Takes a node, returns a list of all neighboring nodes that have not been visited
 		hlist = []
 		if self.checkvisited((node.getx(), node.gety() - 1)) == 0 and \
 				(self.__line[node.gety() - 1][node.getx()] == "." or self.__line[node.gety() - 1][node.getx()] == "E"):
-			hlist.append(Node((node.getx(), node.gety() - 1), self.__endcoord, node))
+			hlist.append(Node((node.getx(), node.gety() - 1), self.__endcoord, hType, node))
 		if self.checkvisited((node.getx() + 1, node.gety())) == 0 and \
 				(self.__line[node.gety()][node.getx() + 1] == "." or self.__line[node.gety()][node.getx() + 1] == "E"):
-			hlist.append(Node((node.getx() + 1, node.gety()), self.__endcoord, node))
+			hlist.append(Node((node.getx() + 1, node.gety()), self.__endcoord, hType, node))
 		if self.checkvisited((node.getx(), node.gety() + 1)) == 0 and \
 				(self.__line[node.gety() + 1][node.getx()] == "." or self.__line[node.gety() + 1][node.getx()] == "E"):
-			hlist.append(Node((node.getx(), node.gety() + 1), self.__endcoord, node))
+			hlist.append(Node((node.getx(), node.gety() + 1), self.__endcoord, hType, node))
 		if self.checkvisited((node.getx() - 1, node.gety())) == 0 and \
 				(self.__line[node.gety()][node.getx() - 1] == "." or self.__line[node.gety()][node.getx() - 1] == "E"):
-			hlist.append(Node((node.getx() - 1, node.gety()), self.__endcoord, node))
+			hlist.append(Node((node.getx() - 1, node.gety()), self.__endcoord, hType, node))
 
 		for i in hlist:
 			if i.getcoord() == self.__endcoord:
@@ -256,6 +278,7 @@ class Environment:
 	def drawPath(self, path):
 		for i in path:
 			self.__line[i[1]][i[0]] = '*'
+
 
 class Simulation:
 	
@@ -269,11 +292,13 @@ class Simulation:
 		self.env.genstartend()
 		
 		self.agent.sense(self.env)
-		length = self.agent.think()
+		length = self.agent.think('octile')
 		self.agent.act(self.env)
 		print("Path length: ", length)
 
 if __name__ == "__main__":
+	start_Time = time.time()
 	sim = Simulation()
 	sim.simulate()
+	print("Total time was: " + str(time.time() - start_Time) + " sec.")
 
