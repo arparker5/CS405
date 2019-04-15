@@ -1,6 +1,8 @@
 '''
 Andrew Parker
-
+Cameron K. Titus
+Curtis Fortenberry
+Laura Lundell
 CS 405
 
 A* Search
