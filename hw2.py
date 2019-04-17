@@ -12,10 +12,6 @@ Dr. Metzgar
 import math
 import time
 
-#manhattan .10270
-#euclidean .06
-#octile .0795
-#chebyshev .054
 
 class Node:
 	__nodecoord = ()
@@ -26,7 +22,7 @@ class Node:
 	
 	def __init__(self, coord, endcoord,hType, prevnode=None):
 		self.__nodecoord = coord
-		#self.__dist = math.sqrt((endcoord[0] - self.__nodecoord[0])**2 + (endcoord[1] - self.__nodecoord[1])**2)
+		# self.__dist = math.sqrt((endcoord[0] - self.__nodecoord[0])**2 + (endcoord[1] - self.__nodecoord[1])**2)
 		self.__hType = hType
 		if self.__hType=='euclidean':
 			self.__dist = math.sqrt((endcoord[0] - self.__nodecoord[0])**2 + (endcoord[1] - self.__nodecoord[1])**2)
@@ -288,19 +284,20 @@ class Simulation:
 		self.agent = Agent()
 		self.env = Environment()
 	
-	def simulate(self):
+	def simulate(self, hstr):
 		self.env.resetmaze()
 		self.env.printmaze()
 		self.env.genstartend()
 		
 		self.agent.sense(self.env)
-		length = self.agent.think('octile')
+		length = self.agent.think(hstr)
 		self.agent.act(self.env)
+		print("Heuristic: ", hstr)
 		print("Path length: ", length)
 
 if __name__ == "__main__":
 	start_Time = time.time()
 	sim = Simulation()
-	sim.simulate()
+	sim.simulate('euclidean')
 	print("Total time was: " + str(time.time() - start_Time) + " sec.")
 
